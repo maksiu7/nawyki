@@ -1,12 +1,17 @@
 <!DOCTYPE html>
 <html lang="pl">
 <head>
- <link rel="icon" type="image/png" href="./ikona%20nawyki.png">
-<link rel="apple-touch-icon" href="./ikona%20nawyki.png">
-<meta name="theme-color" content="#000000">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
+<meta name="app-version" content="2026-11-04.1">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Nawyki">
+<meta name="theme-color" content="#0e0e11">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon-180.png">
 <title>Nawyki</title>
 <style>
 :root{--bg:#f5f5f7;--card:#fff;--ink:#111114;--mut:#8b8b94;--line:#ececf0;--acc:#6d5ce0;--red:#d62f2f;--r:16px;--r2:calc(var(--r)*.6);--fs:16px;
@@ -158,6 +163,15 @@ nav button{flex:none;padding:8px 16px;border-radius:999px;font-size:10px}nav but
 .mv{display:flex;gap:8px}.mv button{width:42px;height:42px;border-radius:12px;background:var(--bg);border:1px solid var(--line);display:grid;place-items:center;color:var(--ink);padding:0}.mv button:disabled{opacity:.25}
 .rw.flash{animation:flash .7s ease-out}@keyframes flash{from{background:rgba(139,124,246,.32)}}
 @media (prefers-reduced-motion:reduce){.rw.flash{animation:none}}
+.bt{display:grid;place-items:center;text-align:center;background:var(--bg);border:1px solid var(--line);border-radius:var(--r2);padding:13px 10px;font-weight:600;font-size:.9em;color:var(--ink);cursor:pointer}
+.two2{display:grid;grid-template-columns:1fr 1fr;gap:8px}.pri2{background:var(--acc);color:#fff;border-color:transparent;margin-top:10px;width:100%}
+textarea{width:100%;min-height:130px;font:inherit;font-size:16px;padding:12px;border:1px solid var(--line);border-radius:var(--r2);background:var(--bg);color:var(--ink);resize:vertical;margin-top:12px}
+.bkchip{display:flex;justify-content:space-between;width:100%;background:rgba(139,124,246,.12);border:1px solid rgba(139,124,246,.35);color:var(--acc);border-radius:var(--r2);padding:11px 14px;margin-bottom:12px;font-size:.88em;font-weight:600}
+#upd{position:fixed;left:50%;top:calc(env(safe-area-inset-top,0px) + 8px);transform:translateX(-50%);z-index:40;display:flex;align-items:center;gap:14px;background:var(--card);border:1px solid var(--acc);border-radius:999px;padding:8px 8px 8px 18px;font-size:.9em;font-weight:600;box-shadow:0 10px 30px -10px var(--acc)}
+#upd button{background:var(--acc);color:#fff;border-radius:999px;padding:8px 16px;font-weight:700}
+.bt{place-items:unset;align-content:center;justify-items:center;min-height:48px}
+#upd span{white-space:nowrap}#upd{width:max-content;max-width:calc(100% - 24px)}
+label.bt{margin:0;font-size:.9em}
 </style>
 </head>
 <body>
@@ -169,9 +183,12 @@ nav button{flex:none;padding:8px 16px;border-radius:999px;font-size:10px}nav but
 <button data-a="tab" data-v="his"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Historia</button>
 <button data-a="tab" data-v="set"><svg viewBox="0 0 24 24" width="24" height="24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h10M18 7h2M4 17h2M10 17h10"/><circle cx="16" cy="7" r="2"/><circle cx="8" cy="17" r="2"/></svg>Ustawienia</button>
 </nav>
+<div id="upd" hidden><span>Dostępna nowa wersja</span><button data-a="reload">Odśwież</button></div>
 <div id="o"></div>
 <script>
 const K='nawyki-v1',KU='nawyki-ui',COL=['#e8776f','#ee9a4d','#efbb45','#efd04a','#a8e04a','#76dc83','#6ad3a6','#66d2c3','#5ed0ea','#52b4f0','#6a9cf0','#7f86e8','#8b7cf6','#b388f0','#d17ff0','#e27bb8','#ee7a80','#94a3b8','#9ca3af','#a8a29e'],DEFC='#8b7cf6',ICONS=['📖','🏃','💪','🧘','💧','✍️','🎯','🎵','🍎','😴','🧹','💻'];
+const isWeb=/^https?:/.test(location.protocol);
+const VER=()=>{const m=document.querySelector('meta[name=app-version]');return m?m.content:''};
 const U0={theme:'dark',acc:null,r:16,fs:16,led:1};
 let S={habits:[],logs:{}},U=Object.assign({},U0);
 try{const r=localStorage.getItem(K);if(r)S=JSON.parse(r)}catch(e){}
@@ -189,7 +206,7 @@ const amt=(h,d)=>(S.logs[h.id]||{})[d]||0,goalAt=(h,d)=>{let v=h.goals[0].v;for(
 const fmt=(h,n)=>h.type==='min'?(n>=60?Math.floor(n/60)+' godz'+(n%60?' '+n%60+' min':''):n+' min'):n+' powt.';
 const dayFrac=d=>{const hs=S.habits.filter(h=>h.created<=d&&(!h.ended||d<h.ended)&&(h.freq!=='w'||amt(h,d)>0));return hs.length?hs.reduce((a,h)=>a+pct(h,d),0)/hs.length:0};
 const long=(d,o)=>fromIso(d).toLocaleDateString('pl-PL',o);
-let ro=false,mvId='',gw='n',nf='d',nw=1,vu='m',hdsel=null,msel=11,ni='target',hy=new Date().getFullYear(),bsel=null,gu='m',fx=0,nu='m',rng=7,tab='today',cal=thisMonth(),hm=thisMonth(),sel=TD,sheet=null,nt='min',nc=DEFC;
+let bkMode='',bkMsg='',imp=null,updMsg='',updNew='',ro=false,mvId='',gw='n',nf='d',nw=1,vu='m',hdsel=null,msel=11,ni='target',hy=new Date().getFullYear(),bsel=null,gu='m',fx=0,nu='m',rng=7,tab='today',cal=thisMonth(),hm=thisMonth(),sel=TD,sheet=null,nt='min',nc=DEFC;
 
 const wkDays=d=>{const t=fromIso(d);t.setDate(t.getDate()-(t.getDay()+6)%7);return Array.from({length:7},(_,i)=>{const x=new Date(t);x.setDate(t.getDate()+i);return iso(x)})};
 const wkCnt=(h,d)=>wkDays(d).filter(x=>amt(h,x)>=goalAt(h,x)).length,wnAt=(h,d)=>{const L=h.wns||[{from:'0000-00-00',v:h.wn||1}];let v=L[0].v;for(const g of L)if(g.from<=d)v=g.v;return v},wN=(h,d)=>h.freq==='w'?wnAt(h,d||TD):0;
@@ -341,6 +358,27 @@ const wkBox=h=>{if(h.freq!=='w')return '';const nm=nextMon(),cur=wN(h,TD),nx=wN(
 function groups(hs,d){const td=hs.filter(h=>!done1(h,d)),dn=hs.filter(h=>done1(h,d));
  return (!td.length&&dn.length?'<div class="alld">Wszystko zrobione. Świetna robota!</div>':'')+(td.length?`<div class="gh">Do zrobienia <span>${td.length}</span></div>${td.map(h=>card(h,d)).join('')}`:'')+(dn.length?`<div class="gh">Wykonane <span>${dn.length}</span></div>${dn.map(h=>card(h,d)).join('')}`:'')}
 function reorderList(hs){return `<div class="sub" style="margin:0 4px 14px">Użyj strzałek, aby zmienić kolejność nawyków. Kolejność obowiązuje w „Dziś” i pod kalendarzem.</div>`+hs.map((h,i)=>`<div class="rw${h.id===mvId?' flash':''}"><span class="ib" style="background:${h.color}22;border:1px solid ${h.color}33">${ledIcon(h.icon,h.color)}</span><span class="rn2">${esc(h.name)}</span><span class="mv"><button data-a="mvu" data-id="${h.id}" ${i===0?'disabled':''} aria-label="Przesuń wyżej">${ico('up','currentColor',22,0)}</button><button data-a="mvd" data-id="${h.id}" ${i===hs.length-1?'disabled':''} aria-label="Przesuń niżej">${ico('down','currentColor',22,0)}</button></span></div>`).join('')}
+const bkJson=()=>JSON.stringify({app:'nawyki',v:1,exported:new Date().toISOString(),data:S,ui:U},null,1);
+const stamp=()=>{U.lb=TD;saveU()};
+const bkNeeded=()=>S.habits.length>0&&(!U.lb||(fromIso(TD)-fromIso(U.lb))/864e5>14);
+async function bkFile(){const j=bkJson(),name='nawyki-kopia-'+TD+'.json';
+ try{const f=new File([j],name,{type:'application/json'});if(navigator.canShare&&navigator.canShare({files:[f]})){await navigator.share({files:[f],title:'Kopia Nawyki'});stamp();bkMsg='Kopia gotowa. Zapisz ją w Plikach lub wyślij do siebie.';return}}catch(e){if(e&&e.name==='AbortError')return}
+ try{const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([j],{type:'application/json'}));a.download=name;document.body.appendChild(a);a.click();a.remove();stamp();bkMsg='Pobrano plik '+name+'.'}catch(e){bkMode='text';bkMsg='Nie udało się zapisać pliku. Skopiuj tekst poniżej.'}}
+async function bkCopy(){try{await navigator.clipboard.writeText(bkJson());stamp();bkMsg='Skopiowano do schowka. Wklej w notatkach albo w wiadomości do siebie.';return}catch(e){}
+ bkMode='text';bkMsg='Zaznacz cały tekst i skopiuj go.'}
+function bkParse(t){try{const o=JSON.parse(t);if(o&&o.app==='nawyki'&&o.data&&Array.isArray(o.data.habits)){imp=o;bkMode='confirm';bkMsg=''}else bkMsg='To nie wygląda na kopię z aplikacji Nawyki.'}catch(e){bkMsg='Nie udało się odczytać kopii.'}}
+async function checkUpd(silent){if(!isWeb)return;try{const r=await fetch(location.href.split('#')[0].split('?')[0],{cache:'reload'}),t=await r.text(),m=t.match(/name="app-version" content="([^"]+)"/);
+ if(m&&m[1]!==VER()){updNew=m[1];updMsg='';document.getElementById('upd').hidden=false}else if(!silent)updMsg='Masz najnowszą wersję.'}catch(e){if(!silent)updMsg='Nie udało się sprawdzić. Brak internetu?'}}
+function backupGroup(){
+ const n=S.habits.length,e=Object.values(S.logs).reduce((a,l)=>a+Object.keys(l).length,0);let x='';
+ if(bkMode==='paste')x=`<div class="pop"><textarea id="bkt" placeholder="Wklej tutaj tekst kopii zapasowej"></textarea><div class="row" style="margin-top:8px"><button class="bt" data-a="bkcancel">Anuluj</button><button class="bt" data-a="bkload" style="background:var(--acc);color:#fff">Wczytaj</button></div></div>`;
+ else if(bkMode==='text')x=`<div class="pop"><textarea id="bkt" readonly>${esc(bkJson())}</textarea><button class="bt" data-a="bkcancel" style="margin-top:8px;width:100%">Zamknij</button></div>`;
+ else if(bkMode==='confirm'&&imp){const nn=imp.data.habits.length,ee=Object.values(imp.data.logs||{}).reduce((a,l)=>a+Object.keys(l).length,0);x=`<div class="pop"><div class="sub" style="color:var(--ink)">Znaleziono kopię: ${nn} nawyków, ${ee} wpisów${imp.exported?`, z ${long(imp.exported.slice(0,10),{day:'numeric',month:'long',year:'numeric'})}`:''}. Wczytanie zastąpi dane w tej aplikacji (obecnie: ${n} nawyków, ${e} wpisów).</div><div class="row" style="margin-top:10px"><button class="bt" data-a="bkcancel">Anuluj</button><button class="bt" data-a="bkyes" style="background:var(--acc);color:#fff">Zastąp dane</button></div></div>`}
+ return `<div class="grp"><div class="gl">Kopia zapasowa</div><div class="sub" style="margin:0 0 12px">${U.lb?'Ostatnia kopia: '+long(U.lb,{day:'numeric',month:'long',year:'numeric'}):'Kopii jeszcze nie robiono.'} Dane są zapisane tylko na tym urządzeniu, więc rób kopie od czasu do czasu.</div>
+ <div class="two2"><button class="bt" data-a="bkfile">Zapisz do pliku</button><button class="bt" data-a="bkcopy">Kopiuj jako tekst</button></div>
+ <div class="two2" style="margin-top:8px"><label class="bt">Importuj z pliku<input type="file" id="impf" accept=".json,application/json,text/plain" hidden></label><button class="bt" data-a="bkpaste">Wklej tekst kopii</button></div>
+ ${bkMsg?`<div class="sub pop" style="margin-top:12px;color:var(--ink)">${esc(bkMsg)}</div>`:''}${x}</div>
+ <div class="grp"><div class="gl">Aplikacja</div><div class="sub" style="margin:0 0 12px">Wersja: ${VER()||'—'}</div>${isWeb?'<button class="bt" data-a="chk" style="width:100%">Sprawdź aktualizację</button>':''}${updMsg?`<div class="sub pop" style="margin-top:10px;color:var(--ink)">${updMsg}</div>`:''}${updNew?`<button class="bt pri2" data-a="reload">Zaktualizuj do ${updNew}</button>`:''}</div>`}
 function hdInfo(h){if(!hdsel)return '';const d=hdsel;return `<div class="ci hdi"><b>${long(d,{weekday:'long',day:'numeric',month:'long'})}${isChg(h,d)?'<em class="tg">zmiana celu</em>':''}</b><span>${h.ended&&d>=h.ended&&!amt(h,d)?'nawyk zakończony':`${fmt(h,amt(h,d))} <i>/ ${fmt(h,goalAt(h,d))}</i>`}</span></div>`}
 function nameEl(h){return sheet.rn?`<div class="rn${sheet.fx==='rn'?' pop':''}"><input type="text" id="rnv" maxlength="40" value="${esc(h.name)}" autocomplete="off"><button class="dn" data-a="rnok">OK</button></div>`:`<button class="nmb" data-a="edit">${esc(h.name)} <span>✎</span></button>`}
 const endBtn=h=>h.ended?'':`<button class="lnk" data-a="${sheet.ec?'endok':'end'}">${sheet.ec?'Na pewno? Zakończ nawyk od dziś':'Zakończ nawyk'}</button>`;
@@ -361,6 +399,7 @@ function render(){
   const hs=S.habits.filter(h=>!h.ended),done=hs.filter(h=>done1(h,TD)).length,dl=long(TD,{weekday:'long',day:'numeric',month:'long'});
   s.textContent=hs.length?`${done} z ${hs.length} zrobionych · ${dl}`:dl;
   m.innerHTML=ro&&hs.length?reorderList(hs):hs.length?groups(hs,TD):`<div class="empty"><b>Nie masz jeszcze nawyków</b>Dotknij +, aby dodać pierwszy i ustawić dzienny cel.</div>`;
+ if(!ro&&bkNeeded())m.insertAdjacentHTML('afterbegin','<button class="bkchip" data-a="tab" data-v="set"><span>Zrób kopię zapasową danych</span><span>→</span></button>');
  }else if(tab==='cal'){
   t.textContent='Kalendarz';s.textContent='Dotknij dnia, aby zobaczyć lub poprawić wpisy';
   const y=cal.getFullYear(),mo=cal.getMonth(),n=new Date(y,mo+1,0).getDate(),off=(cal.getDay()+6)%7;
@@ -380,6 +419,7 @@ function render(){
   <div class="grp"><div class="gl">Poświata LED</div>${seg('uled',[[1,'Włączona'],[0,'Wyłączona']],U.led)}</div>
   <div class="grp"><div class="gl">Zaokrąglenie</div>${seg('ur',[[6,'Ostre'],[16,'Standard'],[26,'Miękkie']],U.r)}</div>
   <div class="grp"><div class="gl">Rozmiar tekstu</div>${seg('ufs',[[15,'Mały'],[16,'Normalny'],[18,'Duży']],U.fs)}</div>
+  ${backupGroup()}
   <button class="lnk" data-a="ureset">Przywróć domyślne</button>`;
  }
  const o=document.getElementById('o'),sc0=(o.querySelector('.sheet')||{}).scrollTop||0,yh0=o.querySelector('.yh'),ys0=(yh0&&sheet&&!sheet.ysr)?yh0.scrollLeft:null;
@@ -418,12 +458,20 @@ function moveHm(k){const n=new Date(hm.getFullYear(),hm.getMonth()+k,1);if(n<=th
 document.addEventListener('click',e=>{
  const el=e.target.closest('[data-a]');if(!el)return;if(el.classList.contains('ov')&&e.target!==el)return;
  const a=el.dataset.a,v=el.dataset.v,h=sheet&&sheet.id?S.habits.find(x=>x.id===sheet.id):null;
- if(a==='tab'){tab=v;fx=1;ro=false}
+ if(a==='tab'){tab=v;fx=1;ro=false;bkMode='';bkMsg='';imp=null;updMsg=''}
  else if(a==='add'){sheet={k:'add',an:1};nt='min';nc=DEFC;nu='m';ni='target';nf='d';nw=1}
  else if(a==='close'){const ov=document.querySelector('.ov');if(!ov||ov.classList.contains('out'))return;ov.classList.add('out');const bk=sheet&&sheet.back;setTimeout(()=>{sheet=bk||null;render()},200);return}
  else if(a==='open'){sheet={k:'h',id:el.dataset.id,day:el.dataset.day,an:1};hm=thisMonth();bsel=null;msel=11;hdsel=null;hy=new Date().getFullYear()}
  else if(a==='bar'){bsel=v}
  else if(a==='ro'){ro=!ro;fx=1}
+ else if(a==='bkfile'){bkFile().then(()=>render());return}
+ else if(a==='bkcopy'){bkCopy().then(()=>render());return}
+ else if(a==='bkpaste'){bkMode='paste';bkMsg=''}
+ else if(a==='bkcancel'){bkMode='';bkMsg='';imp=null}
+ else if(a==='bkload'){bkParse(document.getElementById('bkt').value)}
+ else if(a==='bkyes'&&imp){try{localStorage.setItem('nawyki-prev',JSON.stringify(S))}catch(e){}S=imp.data;S.logs=S.logs||{};S.habits.forEach(h=>{if(!h.goals)h.goals=[{from:h.created,v:h.goal}]});if(imp.ui)U=Object.assign({},U0,imp.ui,{lb:U.lb});save();saveU();applyU();imp=null;bkMode='';bkMsg='Dane zostały wczytane.'}
+ else if(a==='chk'){updMsg='Sprawdzam…';checkUpd(false).then(()=>render())}
+ else if(a==='reload'){location.reload();return}
  else if(a==='mvu'||a==='mvd'){const act=S.habits.filter(x=>!x.ended),i=act.findIndex(x=>x.id===el.dataset.id),j=i+(a==='mvu'?-1:1);if(i>-1&&j>=0&&j<act.length){const p=S.habits.indexOf(act[i]),q=S.habits.indexOf(act[j]);[S.habits[p],S.habits[q]]=[S.habits[q],S.habits[p]];save();mvId=el.dataset.id}}
  else if(a==='hday'){hdsel=hdsel===v?null:v}
  else if(a==='freq'){nf=v;el.parentNode.querySelectorAll('button').forEach(b=>b.classList.toggle('on',b===el));document.getElementById('gf').hidden=v!=='w';document.getElementById('gl').textContent=glt();return}
@@ -490,7 +538,9 @@ let tx=0,tw=null;
 document.addEventListener('touchstart',e=>{const w=e.target.closest('[data-sw]');tw=w?w.dataset.sw:null;tx=e.touches[0].clientX},{passive:true});
 document.addEventListener('touchend',e=>{if(!tw)return;const dx=e.changedTouches[0].clientX-tx,w=tw;tw=null;if(Math.abs(dx)<50)return;const k=dx<0?1:-1;
  if(w==='hm')moveHm(k);else cal=new Date(cal.getFullYear(),cal.getMonth()+k,1);render()});
+document.addEventListener('change',e=>{if(e.target.id==='impf'&&e.target.files[0]){const r=new FileReader();r.onload=()=>{bkParse(String(r.result));render()};r.readAsText(e.target.files[0]);e.target.value=''}});
 applyU();render();
+if(isWeb){checkUpd(true);document.addEventListener('visibilitychange',()=>{if(!document.hidden)checkUpd(true)});try{if('serviceWorker' in navigator)navigator.serviceWorker.register('sw.js').catch(()=>{});if(navigator.storage&&navigator.storage.persist)navigator.storage.persist()}catch(e){}}
 </script>
 </body>
 </html>
