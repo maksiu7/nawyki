@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="color-scheme" content="light dark">
-<meta name="app-version" content="2026-11-08.1">
+<meta name="app-version" content="2026-11-09.1">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -184,6 +184,10 @@ label.bt{margin:0;font-size:.9em}
 .mmg .sel{outline:2px solid var(--ink);outline-offset:1px}
 .mdi{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:10px;padding:10px 12px;background:var(--bg);border:1px solid var(--line);border-radius:var(--r2);font-size:.85em}.mdi b{display:block;text-transform:capitalize}.mdi span{color:var(--mut)}.mdi button{color:var(--acc);font-weight:700;white-space:nowrap}
 .ci b,.mdi b,.h2{text-transform:none}.ci b::first-letter,.mdi b::first-letter,.h2::first-letter{text-transform:uppercase}
+.avg{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px 14px;background:var(--card);border:1px solid var(--line);border-radius:var(--r2)}
+.avg small{display:block;color:var(--mut);font-size:.75em}.avg b{font-size:1.2em;letter-spacing:-.01em}
+.avd{text-align:right}.avd b{font-size:.95em}.avd.pos b{color:#22c55e}.avd.neg b{color:var(--red)}
+.avd small{white-space:nowrap}
 </style>
 </head>
 <body>
@@ -348,12 +352,12 @@ function area(h,o){
  if(o.goals){const gy=o.goals.map(Y);gp=`<path d="M${pl} ${gy[0]}`;for(let i=1;i<n;i++)if(o.goals[i]!==o.goals[i-1]){const m=(xs[i-1]+xs[i])/2;gp+=`H${m}V${gy[i]}`;if(o.chg[i])dots+=`<circle cx="${m}" cy="${gy[i]}" r="3.5" style="fill:var(--ink);stroke:var(--bg);stroke-width:2"/>`}gp+=`H${W-pr}" fill="none" stroke="var(--ink)" stroke-width="1.3" stroke-dasharray="4 4" opacity=".6"/>`}
  return `<div class="pc"><div class="sec" style="margin-top:0">${o.title}</div><div class="sub" style="margin:-6px 0 12px">${o.sub}</div>${o.head||''}<div class="ci" style="margin-top:${o.head?12:0}px">${o.info}</div><svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="${o.title}"><defs><linearGradient id="${id}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${h.color}" stop-opacity=".45"/><stop offset="1" stop-color="${h.color}" stop-opacity="0"/></linearGradient></defs>${g}<path d="${d}L${xs[n-1]} ${base}L${xs[0]} ${base}Z" fill="url(#${id})"/><path d="${d}" fill="none" stroke="${h.color}" stroke-width="2" stroke-linecap="round" style="filter:drop-shadow(0 0 4px ${h.color})"/>${gp}<g style="filter:drop-shadow(0 0 3px ${h.color})">${dots}</g>${hit}</svg><div class="lgd">${o.legend}</div></div>`}
 function dailyChart(h){const ds=lastN(rng),vals=ds.map(d=>amt(h,d)),goals=ds.map(d=>goalAt(h,d)),sel=ds.includes(bsel)?bsel:TD,chg=ds.map(d=>isChg(h,d));
- return area(h,{id:'d',vals,goals,chg,keys:ds,act:'bar',sel:ds.indexOf(sel),every:rng===7?1:7,lab:i=>rng===7?['Nd','Pn','Wt','Śr','Cz','Pt','So'][fromIso(ds[i]).getDay()]:''+(+ds[i].slice(8)),title:'Ostatnie 7 dni',sub:'Dzienny wynik na tle celu. Dotknij punktu, aby zobaczyć dany dzień.',
+ return area(h,{id:'d',vals,goals,chg,keys:ds,act:'bar',sel:ds.indexOf(sel),every:rng===7?1:7,lab:i=>rng===7?['Nd','Pn','Wt','Śr','Cz','Pt','So'][fromIso(ds[i]).getDay()]:''+(+ds[i].slice(8)),title:'Ostatnie 7 dni',head:avgBox(h,7),sub:'Dzienny wynik na tle celu. Dotknij punktu, aby zobaczyć dany dzień.',
   info:`<b>${long(sel,{weekday:'long',day:'numeric',month:'long'})}${isChg(h,sel)?'<em class="tg">zmiana celu</em>':''}</b><span>${h.type==='yn'?fmt(h,amt(h,sel)):`${fmt(h,amt(h,sel))} <i>/ ${fmt(h,goalAt(h,sel))}</i>`}</span>`,
   legend:`<span><i class="ds"></i>cel</span>${chg.some(Boolean)?'<span><i class="dt"></i>zmiana celu</span>':''}`})}
 function monthChart(h){const now=new Date(),ms=[];for(let i=11;i>=0;i--)ms.push(new Date(now.getFullYear(),now.getMonth()-i,1));
  const L=S.logs[h.id]||{},vals=ms.map(m=>{const p=m.getFullYear()+'-'+p2(m.getMonth()+1);let q=0;for(const d in L)if(d.startsWith(p))q+=L[d];return q}),si=msel,dl=si?vals[si]-vals[si-1]:0;
- return area(h,{id:'m',vals,keys:ms.map((_,i)=>i),act:'mon',sel:si,every:1,lab:i=>MN[ms[i].getMonth()],title:'Suma / miesiąc',sub:'Łączny wynik w każdym z ostatnich 12 miesięcy. Dotknij punktu, aby zobaczyć miesiąc i różnicę względem poprzedniego.',
+ return area(h,{id:'m',vals,keys:ms.map((_,i)=>i),act:'mon',sel:si,every:1,lab:i=>MN[ms[i].getMonth()],title:'Suma / miesiąc',head:avgBox(h,30),sub:'Łączny wynik w każdym z ostatnich 12 miesięcy. Dotknij punktu, aby zobaczyć miesiąc i różnicę względem poprzedniego.',
   info:`<b>${ms[si].toLocaleDateString('pl-PL',{month:'long',year:'numeric'})}</b><span>${fmtT(h,vals[si])}${si?` <i class="${dl>=0?'pos':'neg'}">${dl>=0?'+':'−'}${fmtT(h,Math.abs(dl))}</i>`:''}</span>`,
   legend:`<span><i class="dt" style="background:${h.color}"></i>suma za miesiąc</span><span>razem: ${fmtT(h,vals.reduce((a,b)=>a+b,0))}</span>`})}
 function valBox(h,d){
@@ -414,6 +418,15 @@ function miniMonth(h){const t=new Date(),y=t.getFullYear(),mo=t.getMonth(),n=new
   else g+=`<button class="mz${cl}" ${at}>${i}</button>`}
  const info=sl?`<div class="mdi"><div><b>${long(sl,{weekday:'long',day:'numeric',month:'long'})}</b><span>${amtLine(h,sl)}${h.type==='yn'?'':' · '+Math.round(amt(h,sl)/goalAt(h,sl)*100)+'%'}</span></div><button data-a="open" data-id="${h.id}" data-day="${sl}">Edytuj dzień</button></div>`:'';
  return `<div class="mmh">${long(TD,{month:'long',year:'numeric'})}</div><div class="mmg">${g}</div>${info}`}
+function avgBox(h,N){
+ const win=(end,len)=>{let sm=0,c=0,hit=0;for(let i=0;i<len;i++){const t=fromIso(end);t.setDate(t.getDate()-i);const d=iso(t);if(d<h.created)continue;c++;const a=amt(h,d);sm+=a;if(a>0)hit++}return{sm,c,hit}};
+ const pe=(()=>{const t=fromIso(TD);t.setDate(t.getDate()-N);return iso(t)})(),A=win(TD,N),B=win(pe,N),per=N===7?'7 dni':'30 dni',cmp=`vs poprz. ${N} dni`;
+ let label,val,delta='',cls='';
+ if(h.type==='yn'){label='Zrobione dni · '+per;val=`${A.hit} z ${A.c}`;if(B.c){const d=A.hit-B.hit;delta=(d>=0?'+':'−')+Math.abs(d)+' dni';cls=d>=0?'pos':'neg'}}
+ else{const wk=h.freq==='w',v=w=>wk?(w.hit?w.sm/w.hit:0):(w.c?w.sm/w.c:0),f=x=>h.type==='min'?fmt(h,Math.round(x)):(+x.toFixed(1))+' powt.',a=v(A),b=v(B);
+  label=(wk?'Średnio na wykonanie':'Średnia dzienna')+' · '+per;val=f(a);
+  if(wk?B.hit>0:B.c>0){const d=a-b;if(Math.abs(d)>=.05){delta=(d>=0?'+':'−')+f(Math.abs(d));cls=d>=0?'pos':'neg'}}}
+ return `<div class="avg"><div><small>${label}</small><b>${val}</b></div>${delta?`<div class="avd ${cls}"><b>${delta}</b><small>${cmp}</small></div>`:''}</div>`}
 function hdInfo(h){if(!hdsel)return '';const d=hdsel;return `<div class="ci hdi"><b>${long(d,{weekday:'long',day:'numeric',month:'long'})}${isChg(h,d)?'<em class="tg">zmiana celu</em>':''}</b><span>${h.ended&&d>=h.ended&&!amt(h,d)?'nawyk zakończony':`${h.type==='yn'?fmt(h,amt(h,d)):`${fmt(h,amt(h,d))} <i>/ ${fmt(h,goalAt(h,d))}</i>`}`}</span></div>`}
 function nameEl(h){return sheet.rn?`<div class="rn${sheet.fx==='rn'?' pop':''}"><input type="text" id="rnv" maxlength="40" value="${esc(h.name)}" autocomplete="off"><button class="dn" data-a="rnok">OK</button></div>`:`<button class="nmb" data-a="edit">${esc(h.name)} <span>✎</span></button>`}
 const endBtn=h=>h.ended?'':`<button class="lnk" data-a="${sheet.ec?'endok':'end'}">${sheet.ec?'Na pewno? Zakończ nawyk od dziś':'Zakończ nawyk'}</button>`;
